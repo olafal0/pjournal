@@ -16,7 +16,7 @@
   function handleLogin(event) {
     event.preventDefault();
     inProgress = true;
-    request("http://localhost:8000/login", "POST", {
+    request("/api/login", "POST", {
       username,
       password
     })
@@ -33,7 +33,7 @@
 
   function handleRegistration(event) {
     event.preventDefault();
-    request("http://localhost:8000/register", "POST", {
+    request("/api/register", "POST", {
       username,
       password
     })

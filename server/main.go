@@ -29,12 +29,13 @@ func init() {
 func main() {
 	authHook := dispatch.AuthorizerHook(signer)
 	api := &dispatch.API{}
-	api.AddEndpoint("POST/register", loginManager.SignupUser)
-	api.AddEndpoint("POST/login", loginManager.AuthenticateUser)
-	api.AddEndpoint("POST/posts/new", createPost, authHook)
-	api.AddEndpoint("GET/post/{id}", getPost, authHook)
-	api.AddEndpoint("DELETE/post/{id}", deletePost, authHook)
-	api.AddEndpoint("GET/posts/all", listPosts, authHook)
-	http.HandleFunc("/", api.GetHandler())
+	api.AddEndpoint("POST/api/register", loginManager.SignupUser)
+	api.AddEndpoint("POST/api/login", loginManager.AuthenticateUser)
+	api.AddEndpoint("POST/api/posts/new", createPost, authHook)
+	api.AddEndpoint("GET/api/post/{id}", getPost, authHook)
+	api.AddEndpoint("DELETE/api/post/{id}", deletePost, authHook)
+	api.AddEndpoint("GET/api/posts/all", listPosts, authHook)
+	http.HandleFunc("/api/", api.GetHandler())
+	http.Handle("/", http.FileServer(http.Dir("../web/dist/")))
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }

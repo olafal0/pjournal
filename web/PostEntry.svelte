@@ -13,7 +13,7 @@
   function handleNewPost() {
     // Submit new post and reload the page
     postInProgress = true;
-    request("http://localhost:8000/posts/new", "POST", newPostContent, {
+    request("/api/posts/new", "POST", newPostContent, {
       auth: authToken
     })
       .then(postId => {

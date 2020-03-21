@@ -11,7 +11,7 @@
   let postError = null;
 
   function loadPosts() {
-    request("http://localhost:8000/posts/all", "GET", null, {
+    request("/api/posts/all", "GET", null, {
       auth: authToken
     }).then(p => {
       p.reverse();
