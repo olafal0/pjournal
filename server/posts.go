@@ -13,10 +13,10 @@ import (
 
 // JPost represents a journal post, storing its ID along with its content.
 type JPost struct {
-	ID        string
-	Username  string
-	Content   string
-	CreatedAt int64
+	ID        string `json:"id,omitempty"`
+	Username  string `json:"username,omitempty"`
+	Content   string `json:"content,omitempty"`
+	CreatedAt int64  `json:"createdAt,omitempty"`
 }
 
 func getPostIDs(username string) ([]string, error) {
@@ -42,7 +42,7 @@ func createPost(content string, ctx *dispatch.Context) (id string, err error) {
 	post := JPost{
 		ID:        id,
 		Content:   content,
-		CreatedAt: time.Now().Unix(),
+		CreatedAt: time.Now().UnixNano() / 1e6,
 		Username:  ctx.Claims.Subject,
 	}
 	err = db.SetObject(fmt.Sprintf("posts_%s", username), id, post)
