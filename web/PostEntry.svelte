@@ -12,6 +12,7 @@
 
   function handleNewPost() {
     // Submit new post and reload the page
+    postInProgress = true;
     request("http://localhost:8000/posts/new", "POST", newPostContent, {
       auth: authToken
     })
@@ -22,14 +23,23 @@
           M.textareaAutoResize(document.getElementById("post-text-field"))
         );
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        postError = err;
+      })
+      .finally(() => {
+        postInProgress = false;
+      });
   }
 </script>
 
 <div class="row">
   <div class="card grey darken-4 ">
     <div class="card-content">
+      {#if postError}
+        <div class="red-text">{postError}</div>
+      {/if}
       <textarea
+        disabled={postInProgress}
         bind:value={newPostContent}
         id="post-text-field"
         spellcheck="true"

@@ -1,5 +1,6 @@
 <script>
   import Login from "./Login";
+  import Spinner from "./Spinner";
   import { onMount } from "svelte";
   import request from "./request.ts";
   import { createEventDispatcher } from "svelte";
@@ -9,30 +10,43 @@
   let authToken = "";
   let username = "";
   let password = "";
+  let inProgress = false;
+  let loginError = "";
 
   function handleLogin(event) {
     event.preventDefault();
+    inProgress = true;
     request("http://localhost:8000/login", "POST", {
-      Username: username,
-      Password: password
-    }).then(token => {
-      dispatch("loggedIn", token);
-    });
+      username,
+      password
+    })
+      .then(token => {
+        dispatch("loggedIn", token);
+      })
+      .catch(error => {
+        loginError = error;
+      })
+      .finally(() => {
+        inProgress = false;
+      });
   }
 
   function handleRegistration(event) {
     event.preventDefault();
     request("http://localhost:8000/register", "POST", {
-      Username: username,
-      Password: password
-    }).then(token => {
-      dispatch("loggedIn", token);
-    });
+      username,
+      password
+    })
+      .then(token => {
+        dispatch("loggedIn", token);
+      })
+      .catch(error => {
+        loginError = error;
+      })
+      .finally(() => {
+        inProgress = false;
+      });
   }
-
-  onMount(() => {
-    authToken = localStorage.getItem("authToken");
-  });
 </script>
 
 <div class="row">
@@ -53,20 +67,24 @@
               class="white-text"
               name="password"
               bind:value={password} />
+            <input type="submit" class="hide" />
+            <button
+              class="btn waves-effect waves-light grey darken-2 right"
+              on:click={handleLogin}>
+              Log In
+            </button>
+            <button
+              class="btn waves-effect waves-light grey darken-2 left"
+              on:click={handleRegistration}>
+              Register
+            </button>
           </form>
         </div>
-        <div class="row">
-          <button
-            class="btn waves-effect waves-light grey darken-2 col s6 m3"
-            on:click={handleRegistration}>
-            Register
-          </button>
-          <button
-            class="btn waves-effect waves-light grey darken-2 col s6 m3 right"
-            on:click={handleLogin}>
-            Log In
-          </button>
-        </div>
+        {#if inProgress}
+          <Spinner />
+        {:else if loginError}
+          <div class="row red-text">{loginError}</div>
+        {/if}
       </div>
     </div>
   </div>

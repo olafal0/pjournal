@@ -29,7 +29,7 @@ export default function request(
   return new Promise((resolve, reject) => {
     req.addEventListener('load', () => {
       if (req.status >= 400) {
-        reject(req.statusText);
+        reject(req.responseText);
         return;
       }
       const contentType = req.getResponseHeader('Content-Type');
