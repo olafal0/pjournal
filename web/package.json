@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.ts",
   "dependencies": {
-    "@types/materialize-css": "^1.0.7",
     "highlight.js": "^9.18.1",
     "marked": "^0.8.1",
     "materialize-css": "^1.0.0-rc.2"
   },
   "devDependencies": {
+    "@types/materialize-css": "^1.0.7",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-svelte": "^4.0.6",
     "svelte": "^3.20.1",
