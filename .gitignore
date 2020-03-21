@@ -1,0 +1,4 @@
+*.db
+.cache
+dist
+node_modules
