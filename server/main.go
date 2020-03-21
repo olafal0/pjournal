@@ -19,7 +19,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	signer = auth.NewTokenSigner("pjournal", []byte("secretly hidden word of wisdom"))
+	signer = auth.NewTokenSigner("pjournal", []byte("secretly hidden word of wisdom")) // no, this key isn't in use
 	loginManager = &auth.LoginManager{
 		DB:    db,
 		Token: signer,
