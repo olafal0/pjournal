@@ -1,30 +1,17 @@
-interface options {
-  auth?: string;
-  contentType?: string;
-}
-
-const defaultOptions = {
-  auth: null,
-  contentType: 'application/json'
-};
-
 export default function request(
   url: string,
   method?: string,
   formData?: object | string,
-  options?: options
+  contentType?: string
 ) {
   url = url;
   method = method || 'GET';
   formData = formData || null;
-  let { contentType, auth } = Object.assign({}, defaultOptions, options);
+  contentType = contentType || 'application/json';
 
   const req = new XMLHttpRequest();
   req.open(method, url);
   req.setRequestHeader('Content-Type', contentType);
-  if (auth) {
-    req.setRequestHeader('Authorization', auth);
-  }
 
   return new Promise((resolve, reject) => {
     req.addEventListener('load', () => {

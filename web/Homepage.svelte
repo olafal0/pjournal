@@ -4,16 +4,13 @@
   import { onMount } from "svelte";
   import request from "./request.ts";
 
-  export let authToken = "";
   let posts = [];
   let newPostContent = "";
   let postInProgress = false;
   let postError = null;
 
   function loadPosts() {
-    request("/api/posts/all", "GET", null, {
-      auth: authToken
-    }).then(p => {
+    request("/api/posts/all", "GET").then(p => {
       p.reverse();
       posts = p;
     });
@@ -21,9 +18,7 @@
 
   function deletePost(event) {
     const id = event.detail;
-    request(`/api/post/${id}`, "DELETE", null, {
-      auth: authToken
-    })
+    request(`/api/post/${id}`, "DELETE")
       .then(loadPosts)
       .catch(error => {
         postError = error;
@@ -34,7 +29,7 @@
 </script>
 
 <div>
-  <PostEntry {authToken} on:newPostTrigger={loadPosts} />
+  <PostEntry on:newPostTrigger={loadPosts} />
   {#each posts as post (post.id)}
     <Post {...post} on:deletePost={deletePost} />
   {/each}

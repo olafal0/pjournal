@@ -7,7 +7,6 @@
 
   const dispatch = createEventDispatcher();
 
-  let authToken = "";
   let username = "";
   let password = "";
   let inProgress = false;
@@ -20,8 +19,8 @@
       username,
       password
     })
-      .then(token => {
-        dispatch("loggedIn", token);
+      .then(() => {
+        dispatch("loggedIn");
       })
       .catch(error => {
         loginError = error;
@@ -37,8 +36,8 @@
       username,
       password
     })
-      .then(token => {
-        dispatch("loggedIn", token);
+      .then(() => {
+        dispatch("loggedIn");
       })
       .catch(error => {
         loginError = error;

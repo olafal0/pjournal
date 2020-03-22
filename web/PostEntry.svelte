@@ -5,7 +5,6 @@
 
   const dispatch = createEventDispatcher();
 
-  export let authToken = "";
   let newPostContent = "";
   let postInProgress = false;
   let postError = null;
@@ -13,9 +12,7 @@
   function handleNewPost() {
     // Submit new post and reload the page
     postInProgress = true;
-    request("/api/posts/new", "POST", newPostContent, {
-      auth: authToken
-    })
+    request("/api/posts/new", "POST", newPostContent)
       .then(postId => {
         dispatch("newPostTrigger", { postId });
         newPostContent = "";

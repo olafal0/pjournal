@@ -1,22 +1,24 @@
 <script>
   import Homepage from "./Homepage";
   import Login from "./Login";
+  import request from "./request";
   import { onMount } from "svelte";
 
-  let authToken = "";
+  let isLoggedIn = "";
 
-  function loggedIn(event) {
-    localStorage.setItem("authToken", event.detail);
-    authToken = event.detail;
+  function checkLoggedIn() {
+    const regex = /dispatch-logged-in=(?<loginStatus>\w+)/;
+    const cookies = document.cookie;
+    const cookieMatch = cookies.match(regex);
+    isLoggedIn = cookieMatch && cookieMatch.groups.loginStatus == "true";
   }
 
   function logout() {
-    localStorage.removeItem("authToken");
-    authToken = "";
+    request("/api/logout", "GET").then(checkLoggedIn);
   }
 
   onMount(() => {
-    authToken = localStorage.getItem("authToken");
+    checkLoggedIn();
   });
 </script>
 
@@ -25,7 +27,7 @@
     <div class="nav-wrapper grey darken-4">
       <div class="brand-logo">pjournal</div>
       <ul class="col right">
-        {#if authToken}
+        {#if isLoggedIn}
           <li>
             <button class="btn grey darken-2" on:click={logout}>Log Out</button>
           </li>
@@ -36,10 +38,10 @@
 </nav>
 <div class="container">
   <div class="col">
-    {#if authToken}
-      <Homepage {authToken} />
+    {#if isLoggedIn}
+      <Homepage />
     {:else}
-      <Login on:loggedIn={loggedIn} />
+      <Login on:loggedIn={checkLoggedIn} />
     {/if}
   </div>
 </div>
