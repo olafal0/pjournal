@@ -17,6 +17,7 @@ type JPost struct {
 	Username  string `json:"username,omitempty"`
 	Content   string `json:"content,omitempty"`
 	CreatedAt int64  `json:"createdAt,omitempty"`
+	UpdatedAt int64  `json:"updatedAt,omitempty"`
 }
 
 func getPostIDs(username string) ([]string, error) {
@@ -62,6 +63,26 @@ func getPost(ctx *dispatch.Context) (*JPost, error) {
 	result := JPost{}
 	err := db.GetObject(fmt.Sprintf("posts_%s", username), ctx.PathVars["id"], &result)
 	return &result, err
+}
+
+func updatePost(content string, ctx *dispatch.Context) (err error) {
+	username := ctx.Claims.Subject
+	postID := ctx.PathVars["id"]
+
+	post := JPost{}
+	err = db.GetObject(fmt.Sprintf("posts_%s", username), postID, &post)
+	if err != nil {
+		return err
+	}
+
+	post.Content = content
+	post.UpdatedAt = time.Now().UnixNano() / 1e6
+
+	err = db.SetObject(fmt.Sprintf("posts_%s", username), postID, post)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func listPosts(ctx *dispatch.Context) ([]JPost, error) {

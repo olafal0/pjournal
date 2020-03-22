@@ -34,6 +34,7 @@ func main() {
 	api.AddEndpoint("GET/api/logout", loginManager.LogoutUser)
 	api.AddEndpoint("POST/api/posts/new", createPost, authHook)
 	api.AddEndpoint("GET/api/post/{id}", getPost, authHook)
+	api.AddEndpoint("POST/api/post/{id}", updatePost, authHook)
 	api.AddEndpoint("DELETE/api/post/{id}", deletePost, authHook)
 	api.AddEndpoint("GET/api/posts/all", listPosts, authHook)
 	http.HandleFunc("/api/", api.GetHandler())

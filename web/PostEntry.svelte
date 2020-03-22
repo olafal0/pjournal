@@ -45,7 +45,7 @@
     </div>
     <div class="card-action">
       <button
-        class="btn waves-effect waves-light grey darken-2"
+        class="btn waves-effect waves-light blue darken-4"
         on:click={handleNewPost}>
         Submit
       </button>
