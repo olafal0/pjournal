@@ -27,10 +27,11 @@ func init() {
 }
 
 func main() {
-	authHook := dispatch.AuthorizerHook(signer)
+	authHook := auth.AuthorizerHook(signer)
 	api := &dispatch.API{}
 	api.AddEndpoint("POST/api/register", loginManager.SignupUser)
 	api.AddEndpoint("POST/api/login", loginManager.AuthenticateUser)
+	api.AddEndpoint("GET/api/logout", loginManager.LogoutUser)
 	api.AddEndpoint("POST/api/posts/new", createPost, authHook)
 	api.AddEndpoint("GET/api/post/{id}", getPost, authHook)
 	api.AddEndpoint("DELETE/api/post/{id}", deletePost, authHook)
