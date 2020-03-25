@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/olafal0/dispatch"
 	"github.com/olafal0/dispatch/auth"
@@ -13,9 +14,22 @@ var db *kvstore.KeyValueDB
 var signer *auth.TokenSigner
 var loginManager *auth.LoginManager
 
+var contentDir = os.Getenv("CONTENT_DIR")
+var dbFile = os.Getenv("DB_FILE")
+
 func init() {
+	if dbFile == "" {
+		dbFile = "pjournal.db"
+	}
+
+	if contentDir == "" {
+		contentDir = "../web/dist"
+	}
+
+	log.Printf("Using CONTENT_DIR=%s DB_FILE=%s\n", contentDir, dbFile)
+
 	var err error
-	db, err = kvstore.NewDB("pjournal.db")
+	db, err = kvstore.NewDB(dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,6 +52,6 @@ func main() {
 	api.AddEndpoint("DELETE/api/post/{id}", deletePost, authHook)
 	api.AddEndpoint("GET/api/posts/all", listPosts, authHook)
 	http.HandleFunc("/api/", api.GetHandler())
-	http.Handle("/", http.FileServer(http.Dir("../web/dist/")))
+	http.Handle("/", http.FileServer(http.Dir(contentDir)))
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }

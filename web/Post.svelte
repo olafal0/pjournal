@@ -1,10 +1,12 @@
 <script>
   import Modal from "./Modal";
+  import PostEntry from "./PostEntry";
   import request from "./request";
+  import { encryptKey, localEncryptEnabled } from "./store";
+  import { encryptPost, decryptPost } from "./cryption";
   import marked from "marked";
   import hljs from "highlight.js";
-  import { createEventDispatcher, tick } from "svelte";
-  import M from "materialize-css";
+  import { createEventDispatcher, onMount } from "svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -12,23 +14,26 @@
   export let content = "";
   export let createdAt = Date.now();
   export let updatedAt = undefined;
-  export const username = "";
+  export let encrypted = false;
+  export let iv = "";
 
+  let displayContent = "";
   let createdTimeStr;
   let updatedTimeStr;
   let hovering = false;
   let showDeleteModal = false;
   let editing = false;
-  let editedContent = content;
+  let editedContent = displayContent;
   let updateInProgress = false;
   let updateError = "";
 
   function updatePost() {
     updateInProgress = true;
-    request(`/api/post/${id}`, "POST", editedContent)
-      .then(() => {
-        content = editedContent;
+    encryptPost(editedContent, $localEncryptEnabled, $encryptKey)
+      .then(encryptedPost => {
+        displayContent = editedContent;
         editing = false;
+        return request(`/api/post/${id}`, "POST", encryptedPost);
       })
       .catch(error => {
         updateError = error;
@@ -52,18 +57,26 @@
   $: createdTimeStr = formatDate(createdAt);
   $: updatedTimeStr = formatDate(updatedAt);
 
-  $: if (editing) {
-    tick().then(() =>
-      M.textareaAutoResize(document.getElementById(`${id}-edit-field`))
-    );
-  }
+  $: editedContent = displayContent;
 
-  marked.setOptions({
-    gfm: true,
-    highlight: function(code, language) {
-      const validLanguage = hljs.getLanguage(language) ? language : "plaintext";
-      return hljs.highlight(validLanguage, code).value;
-    }
+  onMount(() => {
+    marked.setOptions({
+      gfm: true,
+      highlight: function(code, language) {
+        const validLanguage = hljs.getLanguage(language)
+          ? language
+          : "plaintext";
+        return hljs.highlight(validLanguage, code).value;
+      }
+    });
+
+    decryptPost($encryptKey, {
+      content,
+      encrypted,
+      iv
+    }).then(c => {
+      displayContent = c;
+    });
   });
 </script>
 
@@ -71,61 +84,48 @@
   .aside {
     font-size: 75%;
   }
+  :global(.markdown-content p) {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+  }
 </style>
 
 <div class="row">
   <div class="col l8 s12 offset-l2">
-    <div
-      class="card grey darken-4"
-      on:mouseenter={() => (hovering = true)}
-      on:mouseleave={() => (hovering = false)}>
-      <div class="card-content white-text">
-        {#if hovering && !editing}
-          <div class="right">
-            <div class="btn red" on:click={() => (showDeleteModal = true)}>
-              Delete
+    {#if editing}
+      <PostEntry
+        bind:newPostContent={editedContent}
+        {id}
+        postInProgress={updateInProgress}
+        on:updatePost={updatePost}
+        update="true"
+        on:cancelEdit={() => {
+          editing = false;
+        }} />
+    {:else}
+      <div
+        class="card grey darken-4"
+        on:mouseenter={() => (hovering = true)}
+        on:mouseleave={() => (hovering = false)}>
+        <div class="card-content white-text">
+          {#if hovering}
+            <div class="right">
+              <div class="btn red" on:click={() => (showDeleteModal = true)}>
+                Delete
+              </div>
+              <div class="btn grey" on:click={() => (editing = true)}>Edit</div>
             </div>
-            <div class="btn grey" on:click={() => (editing = true)}>Edit</div>
-          </div>
-        {/if}
-        <i class="aside">
-          {createdTimeStr}
-          {#if updatedAt}edited {updatedTimeStr}{/if}
-        </i>
-        <p>
-          {#if editing}
-            <div class="card-content">
-              {#if updateError}
-                <div class="red-text">{updateError}</div>
-              {/if}
-              <textarea
-                disabled={updateInProgress}
-                bind:value={editedContent}
-                id={`${id}-edit-field`}
-                spellcheck="true"
-                placeholder="How was your day?"
-                class="materialize-textarea input-field s12 white-text" />
-            </div>
-            <div class="card-action">
-              <button
-                class="btn waves-effect waves-light grey darken-2"
-                on:click={() => {
-                  editing = false;
-                }}>
-                Cancel
-              </button>
-              <button
-                class="btn waves-effect waves-light blue darken-4 right"
-                on:click={updatePost}>
-                Submit
-              </button>
-            </div>
-          {:else}
-            {@html marked(content, { gfm: true })}
           {/if}
-        </p>
+          <i class="aside">
+            {createdTimeStr}
+            {#if updatedAt}edited {updatedTimeStr}{/if}
+          </i>
+          <div class="markdown-content">
+            {@html marked(displayContent, { gfm: true })}
+          </div>
+        </div>
       </div>
-    </div>
+    {/if}
   </div>
 </div>
 

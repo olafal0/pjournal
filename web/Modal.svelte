@@ -3,13 +3,12 @@
   import { createEventDispatcher, onDestroy } from "svelte";
 
   const dispatch = createEventDispatcher();
-  const close = () => dispatch("close");
 
   let modal;
 
   const handle_keydown = e => {
     if (e.key === "Escape") {
-      close();
+      dispatch("close");
       return;
     }
 
@@ -68,7 +67,7 @@
 
 <svelte:window on:keydown={handle_keydown} />
 
-<div class="modal-bg" on:click={close}>
+<div class="modal-bg" on:click={() => dispatch('close')}>
 
   <div
     class="modal-fg"

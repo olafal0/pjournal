@@ -1,10 +1,13 @@
 <script>
   import Homepage from "./Homepage";
+  import Settings from "./Settings";
   import Login from "./Login";
   import request from "./request";
+  import { username } from "./store";
   import { onMount } from "svelte";
 
   let isLoggedIn = "";
+  let showSettings = false;
 
   function checkLoggedIn() {
     const regex = /dispatch-logged-in=(?<loginStatus>\w+)/;
@@ -29,7 +32,16 @@
       <ul class="col right">
         {#if isLoggedIn}
           <li>
-            <button class="btn grey darken-2" on:click={logout}>Log Out</button>
+            <button
+              class="btn-flat white-text"
+              on:click={() => (showSettings = !showSettings)}>
+              Settings
+            </button>
+          </li>
+          <li>
+            <button class="btn-flat white-text" on:click={logout}>
+              Log Out
+            </button>
           </li>
         {/if}
       </ul>
@@ -39,7 +51,11 @@
 <div class="container">
   <div class="col">
     {#if isLoggedIn}
-      <Homepage />
+      {#if showSettings}
+        <Settings on:closeSettings={() => (showSettings = false)} />
+      {:else}
+        <Homepage />
+      {/if}
     {:else}
       <Login on:loggedIn={checkLoggedIn} />
     {/if}

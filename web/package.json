@@ -5,7 +5,7 @@
   "main": "index.ts",
   "dependencies": {
     "highlight.js": "^9.18.1",
-    "marked": "^0.8.1",
+    "marked": "^0.8.2",
     "material-design-icons": "^3.0.1",
     "materialize-css": "^1.0.0"
   },

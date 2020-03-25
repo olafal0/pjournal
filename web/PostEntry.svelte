@@ -1,24 +1,28 @@
 <script>
   import request from "./request.ts";
-  import { createEventDispatcher, tick } from "svelte";
+  import { localEncryptEnabled, encryptKey } from "./store";
+  import { encryptPost } from "./cryption";
+  import { createEventDispatcher, tick, onMount } from "svelte";
   import M from "materialize-css";
 
   const dispatch = createEventDispatcher();
 
-  let newPostContent = "";
-  let postInProgress = false;
-  let postError = null;
+  export let newPostContent = "";
+  export let postInProgress = false;
+  export let postError = null;
+  export let update = false;
+  export let id = "";
 
-  function handleNewPost() {
-    // Submit new post and reload the page
-    postInProgress = true;
-    request("/api/posts/new", "POST", newPostContent)
-      .then(postId => {
-        dispatch("newPostTrigger", { postId });
-        newPostContent = "";
-        tick().then(() =>
-          M.textareaAutoResize(document.getElementById("post-text-field"))
-        );
+  function submitContent() {
+    encryptPost(newPostContent, $localEncryptEnabled, $encryptKey)
+      .then(postData => {
+        return request("/api/posts/new", "POST", postData).then(postId => {
+          dispatch("newPostTrigger", { postId });
+          newPostContent = "";
+          tick().then(() =>
+            M.textareaAutoResize(document.getElementById("post-text-field"))
+          );
+        });
       })
       .catch(err => {
         postError = err;
@@ -27,28 +31,45 @@
         postInProgress = false;
       });
   }
+
+  onMount(() => {
+    tick().then(() =>
+      M.textareaAutoResize(document.getElementById(`post-text-field${id}`))
+    );
+  });
 </script>
 
-<div class="row">
-  <div class="card grey darken-4 ">
-    <div class="card-content">
-      {#if postError}
-        <div class="red-text">{postError}</div>
-      {/if}
-      <textarea
-        disabled={postInProgress}
-        bind:value={newPostContent}
-        id="post-text-field"
-        spellcheck="true"
-        placeholder="How was your day?"
-        class="materialize-textarea input-field s12 white-text" />
-    </div>
-    <div class="card-action">
+<div class="card grey darken-4">
+  <div class="card-content">
+    {#if postError}
+      <div class="red-text">{postError}</div>
+    {/if}
+    <textarea
+      disabled={postInProgress}
+      bind:value={newPostContent}
+      id="post-text-field{id}"
+      spellcheck="true"
+      placeholder="How was your day?"
+      class="materialize-textarea input-field white-text" />
+  </div>
+  <div class="card-action">
+    {#if update}
       <button
-        class="btn waves-effect waves-light blue darken-4"
-        on:click={handleNewPost}>
+        class="btn waves-effect waves-light grey darken-2"
+        on:click={() => dispatch('cancelEdit')}>
+        Cancel
+      </button>
+      <button
+        class="btn waves-effect waves-light blue darken-4 right"
+        on:click={() => dispatch('updatePost')}>
         Submit
       </button>
-    </div>
+    {:else}
+      <button
+        class="btn waves-effect waves-light blue darken-4"
+        on:click={submitContent}>
+        Submit
+      </button>
+    {/if}
   </div>
 </div>

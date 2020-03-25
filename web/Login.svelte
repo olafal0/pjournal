@@ -1,6 +1,7 @@
 <script>
   import Login from "./Login";
   import Spinner from "./Spinner";
+  import { username as storedUsername } from "./store";
   import { onMount } from "svelte";
   import request from "./request.ts";
   import { createEventDispatcher } from "svelte";
@@ -20,6 +21,7 @@
       password
     })
       .then(() => {
+        storedUsername.set(username);
         dispatch("loggedIn");
       })
       .catch(error => {
@@ -37,6 +39,7 @@
       password
     })
       .then(() => {
+        storedUsername.set(username);
         dispatch("loggedIn");
       })
       .catch(error => {
