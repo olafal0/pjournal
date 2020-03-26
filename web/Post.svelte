@@ -32,6 +32,7 @@
     encryptPost(editedContent, $localEncryptEnabled, $encryptKey)
       .then(encryptedPost => {
         displayContent = editedContent;
+        encrypted = true;
         editing = false;
         return request(`/api/post/${id}`, "POST", encryptedPost);
       })
@@ -108,6 +109,11 @@
         on:mouseenter={() => (hovering = true)}
         on:mouseleave={() => (hovering = false)}>
         <div class="card-content white-text">
+          {#if encrypted}
+            <div class="material-icons white-text right" title="Encrypted">
+              lock
+            </div>
+          {/if}
           {#if hovering}
             <div class="right">
               <div class="btn red" on:click={() => (showDeleteModal = true)}>
