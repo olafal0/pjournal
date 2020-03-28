@@ -6,4 +6,4 @@ pjournal is a web app for keeping a personal journal—like a blog that only you
 
 ![pjournal screenshot](/screenshots/pjournal-2020-03-21.png?raw=true)
 
-pjournal is made using [dispatch](https://github.com/olafal0/dispatch), [Parcel](https://parceljs.org), [Svelte](https://svelte.dev), and [Marked.js](https://marked.js.org).
+pjournal is made using [dispatch](https://github.com/flick-web/dispatch), [Parcel](https://parceljs.org), [Svelte](https://svelte.dev), and [Marked.js](https://marked.js.org).

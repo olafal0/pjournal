@@ -1,6 +1,6 @@
 {
   "name": "pjournal-web",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "main": "index.ts",
   "dependencies": {
@@ -17,7 +17,7 @@
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "start": "parcel index.html",
+    "start": "parcel watch index.html",
     "build": "parcel build index.html"
   },
   "author": "olafal0",

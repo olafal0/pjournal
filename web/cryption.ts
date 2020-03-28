@@ -93,8 +93,12 @@ export async function encryptPost(content, encryptEnabled, key) {
   return { content };
 }
 
-export async function decryptPost(key, { content, encrypted, iv }) {
-  if (!encrypted) {
+export async function decryptPost(
+  { content, encrypted, iv },
+  encryptEnabled,
+  key
+) {
+  if (!encrypted || !encryptEnabled) {
     return content;
   }
 
@@ -108,11 +112,16 @@ export async function decryptPost(key, { content, encrypted, iv }) {
     ivBytes.push(codePoint.codePointAt(0));
   }
 
-  const plaintext = await decrypt(
-    JSON.parse(key),
-    Uint8Array.from(contentBytes),
-    Uint8Array.from(ivBytes)
-  ).catch(err => `Decryption failed: ${err}`);
+  let plaintext: string;
+  try {
+    plaintext = await decrypt(
+      JSON.parse(key),
+      Uint8Array.from(contentBytes),
+      Uint8Array.from(ivBytes)
+    );
+  } catch (err) {
+    plaintext = `Decryption failed: ${err}\n\n${content}`;
+  }
 
   return plaintext;
 }

@@ -32,7 +32,7 @@
     encryptPost(editedContent, $localEncryptEnabled, $encryptKey)
       .then(encryptedPost => {
         displayContent = editedContent;
-        encrypted = true;
+        encrypted = encryptedPost.encrypted;
         editing = false;
         return request(`/api/post/${id}`, "POST", encryptedPost);
       })
@@ -71,11 +71,15 @@
       }
     });
 
-    decryptPost($encryptKey, {
-      content,
-      encrypted,
-      iv
-    }).then(c => {
+    decryptPost(
+      {
+        content,
+        encrypted,
+        iv
+      },
+      $localEncryptEnabled == "true",
+      $encryptKey
+    ).then(c => {
       displayContent = c;
     });
   });

@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/olafal0/dispatch"
-	"github.com/olafal0/dispatch/auth"
-	"github.com/olafal0/dispatch/kvstore"
+	"github.com/flick-web/auth"
+	"github.com/flick-web/dispatch"
+	"github.com/flick-web/kvstore"
 )
 
-var db *kvstore.KeyValueDB
+var db kvstore.KeyValueStore
 var signer *auth.TokenSigner
 var loginManager *auth.LoginManager
 
@@ -29,7 +29,7 @@ func init() {
 	log.Printf("Using CONTENT_DIR=%s DB_FILE=%s\n", contentDir, dbFile)
 
 	var err error
-	db, err = kvstore.NewDB(dbFile)
+	db, err = kvstore.NewSqliteDB(dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,16 +41,15 @@ func init() {
 }
 
 func main() {
-	authHook := auth.AuthorizerHook(signer)
 	api := &dispatch.API{}
 	api.AddEndpoint("POST/api/register", loginManager.SignupUser)
 	api.AddEndpoint("POST/api/login", loginManager.AuthenticateUser)
 	api.AddEndpoint("GET/api/logout", loginManager.LogoutUser)
-	api.AddEndpoint("POST/api/posts/new", createPost, authHook)
-	api.AddEndpoint("GET/api/post/{id}", getPost, authHook)
-	api.AddEndpoint("POST/api/post/{id}", updatePost, authHook)
-	api.AddEndpoint("DELETE/api/post/{id}", deletePost, authHook)
-	api.AddEndpoint("GET/api/posts/all", listPosts, authHook)
+	api.AddEndpoint("POST/api/posts/new", createPost, loginManager.AuthorizerHook)
+	api.AddEndpoint("GET/api/post/{id}", getPost, loginManager.AuthorizerHook)
+	api.AddEndpoint("POST/api/post/{id}", updatePost, loginManager.AuthorizerHook)
+	api.AddEndpoint("DELETE/api/post/{id}", deletePost, loginManager.AuthorizerHook)
+	api.AddEndpoint("GET/api/posts/all", listPosts, loginManager.AuthorizerHook)
 	http.HandleFunc("/api/", api.GetHandler())
 	http.Handle("/", http.FileServer(http.Dir(contentDir)))
 	log.Fatal(http.ListenAndServe(":8000", nil))

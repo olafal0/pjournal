@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/olafal0/dispatch"
+	"github.com/flick-web/dispatch"
 	"github.com/sethvargo/go-diceware/diceware"
 )
 
@@ -36,7 +36,7 @@ type NewPost struct {
 
 func getPostIDs(username string) ([]string, error) {
 	postIDs := make([]string, 0, 16)
-	err := db.GetObject(fmt.Sprintf("posts_%s", username), "id_list", &postIDs)
+	err := db.Get(fmt.Sprintf("posts_%s", username), "id_list", &postIDs)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
@@ -62,12 +62,12 @@ func createPost(newPost NewPost, ctx *dispatch.Context) (id string, err error) {
 		Encrypted: newPost.Encrypted,
 		IV:        newPost.IV,
 	}
-	err = db.SetObject(fmt.Sprintf("posts_%s", username), id, post)
+	err = db.Set(fmt.Sprintf("posts_%s", username), id, post)
 	if err != nil {
 		return "", err
 	}
 	postIDs = append(postIDs, id)
-	err = db.SetObject(fmt.Sprintf("posts_%s", username), "id_list", postIDs)
+	err = db.Set(fmt.Sprintf("posts_%s", username), "id_list", postIDs)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +77,7 @@ func createPost(newPost NewPost, ctx *dispatch.Context) (id string, err error) {
 func getPost(ctx *dispatch.Context) (*JPost, error) {
 	username := ctx.Claims.Subject
 	result := JPost{}
-	err := db.GetObject(fmt.Sprintf("posts_%s", username), ctx.PathVars["id"], &result)
+	err := db.Get(fmt.Sprintf("posts_%s", username), ctx.PathVars["id"], &result)
 	return &result, err
 }
 
@@ -86,7 +86,7 @@ func updatePost(newPost NewPost, ctx *dispatch.Context) (err error) {
 	postID := ctx.PathVars["id"]
 
 	post := JPost{}
-	err = db.GetObject(fmt.Sprintf("posts_%s", username), postID, &post)
+	err = db.Get(fmt.Sprintf("posts_%s", username), postID, &post)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func updatePost(newPost NewPost, ctx *dispatch.Context) (err error) {
 	post.Encrypted = newPost.Encrypted
 	post.IV = newPost.IV
 
-	err = db.SetObject(fmt.Sprintf("posts_%s", username), postID, post)
+	err = db.Set(fmt.Sprintf("posts_%s", username), postID, post)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func listPosts(ctx *dispatch.Context) ([]JPost, error) {
 	}
 	for _, id := range searchSet {
 		retrievedPost := JPost{}
-		err := db.GetObject(fmt.Sprintf("posts_%s", username), id, &retrievedPost)
+		err := db.Get(fmt.Sprintf("posts_%s", username), id, &retrievedPost)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +140,7 @@ func deletePost(ctx *dispatch.Context) error {
 		return err
 	}
 	postID := ctx.PathVars["id"]
-	err = db.DeleteObject(fmt.Sprintf("posts_%s", username), postID)
+	err = db.Delete(fmt.Sprintf("posts_%s", username), postID)
 	if err != nil {
 		return err
 	}
@@ -158,6 +158,6 @@ func deletePost(ctx *dispatch.Context) error {
 	}
 
 	postIDs = append(postIDs[:postIndex], postIDs[postIndex+1:]...)
-	err = db.SetObject(fmt.Sprintf("posts_%s", username), "id_list", postIDs)
+	err = db.Set(fmt.Sprintf("posts_%s", username), "id_list", postIDs)
 	return err
 }
