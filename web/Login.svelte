@@ -70,13 +70,11 @@
               name="password"
               bind:value={password} />
             <input type="submit" class="hide" />
-            <button
-              class="btn waves-effect waves-light grey darken-2 right"
-              on:click={handleLogin}>
+            <button class="btn grey darken-2 right" on:click={handleLogin}>
               Log In
             </button>
             <button
-              class="btn waves-effect waves-light grey darken-2 left"
+              class="btn grey darken-2 left"
               on:click={handleRegistration}>
               Register
             </button>

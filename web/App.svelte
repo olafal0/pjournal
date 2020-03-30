@@ -25,6 +25,12 @@
   });
 </script>
 
+<style>
+  nav .brand-logo {
+    padding: 0px 10px;
+  }
+</style>
+
 <nav>
   <div class="row">
     <div class="nav-wrapper grey darken-4">
