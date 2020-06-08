@@ -1,0 +1,66 @@
+image: golang:latest
+
+stages:
+  - test
+  - deploy-dev
+  - deploy-prod
+  - deploy-pages
+
+test:
+  stage: test
+  only:
+    changes:
+      - "server/**/*"
+  script:
+    - cd server
+    - go fmt
+    - go vet
+    - COVERAGE=`go test -cover -race ./...`
+
+deploy development:
+  stage: deploy-dev
+  only:
+    changes:
+      - "server/**/*"
+      - deployment-prereq.yml
+      - pjournal.yml
+  before_script:
+    - apt-get update
+    - apt-get install -y zip jq python-pip
+    - pip install awscli --upgrade
+  script:
+    - ./scripts/deploy.sh development
+
+deploy production:
+  stage: deploy-prod
+  only:
+    refs:
+      - master
+  before_script:
+    - apt-get update
+    - apt-get install -y zip jq python-pip
+    - pip install awscli --upgrade
+  script:
+    - ./scripts/deploy.sh production
+    - ./scripts/generate-config.sh production
+  artifacts:
+    paths:
+      - web/config.js
+    expire_in: 7 days
+
+pages:
+  image: node:latest
+  stage: deploy-pages
+  dependencies:
+    - deploy production
+  only:
+    refs:
+      - master
+  script:
+    - cd web
+    - npm ci
+    - ./node_modules/parcel/bin/cli.js build index.html --no-source-maps --public-url ./
+    - cp -r dist ../public
+  artifacts:
+    paths:
+      - public
