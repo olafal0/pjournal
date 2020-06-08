@@ -1,5 +1,6 @@
 <script>
   import request from "./request.ts";
+  import config from "./config";
   import { localEncryptEnabled, encryptKey } from "./store";
   import { encryptPost } from "./cryption";
   import { createEventDispatcher, onMount } from "svelte";
@@ -13,14 +14,17 @@
   export let id = "";
 
   let textarea;
+  let textareaStyle;
 
   function submitContent() {
     encryptPost(newPostContent, $localEncryptEnabled, $encryptKey)
       .then(postData => {
-        return request("/api/posts/new", "POST", postData).then(postId => {
-          dispatch("newPostTrigger", { postId });
-          newPostContent = "";
-        });
+        return request
+          .post(`${config.apiUrl}/posts/new`, postData)
+          .then(postId => {
+            dispatch("newPostTrigger", { postId });
+            newPostContent = "";
+          });
       })
       .catch(err => {
         postError = err;
@@ -32,14 +36,26 @@
   }
 
   function updateFieldHeight() {
+    if (!textareaStyle) {
+      return;
+    }
     // Set height to auto to shrink if above min-height
     textarea.style.height = "auto";
 
     // Round height to multiples of lineHeight
-    let lineHeightPx = parseFloat(getComputedStyle(textarea).lineHeight);
+    let lineHeightPx;
+    if (textareaStyle.lineHeight === "normal") {
+      lineHeightPx = parseFloat(textareaStyle.fontSize) * 1.5;
+    } else {
+      lineHeightPx = parseFloat(textareaStyle.lineHeight);
+    }
     let height = textarea.scrollHeight;
     height += lineHeightPx - (height % lineHeightPx);
     textarea.style.height = height + "px";
+  }
+
+  $: if (textarea) {
+    textareaStyle = getComputedStyle(textarea);
   }
 
   onMount(() => {
@@ -50,18 +66,19 @@
 <style>
   .pj-textarea {
     background-color: transparent;
-    border: none;
-    border-bottom: 1px solid grey;
+    line-height: 1.5em;
+    border: 1px solid grey;
     width: 100%;
     outline: none;
     min-height: 3em;
     resize: none;
     box-sizing: border-box;
     overflow-y: hidden;
+    padding: 10px;
   }
 
-  .pj-textarea:focus {
-    border-bottom: 1px solid hotpink;
+  .card {
+    padding: 10px 0px;
   }
 </style>
 

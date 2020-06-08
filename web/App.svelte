@@ -2,27 +2,27 @@
   import Homepage from "./Homepage";
   import Settings from "./Settings";
   import Login from "./Login";
+  import Auth from "./Auth";
   import request from "./request";
   import { username } from "./store";
   import { onMount } from "svelte";
 
-  let isLoggedIn = "";
+  let user = null;
   let showSettings = false;
 
-  function checkLoggedIn() {
-    const regex = /dispatch-logged-in=(?<loginStatus>\w+)/;
-    const cookies = document.cookie;
-    const cookieMatch = cookies.match(regex);
-    isLoggedIn = cookieMatch && cookieMatch.groups.loginStatus == "true";
+  function signedIn() {
+    Auth.currentAuthenticatedUser()
+      .then(userData => {
+        user = userData;
+      })
+      .catch(console.error);
   }
 
   function logout() {
-    request("/api/logout", "GET").then(checkLoggedIn);
+    Auth.signOut().then(() => {
+      user = null;
+    });
   }
-
-  onMount(() => {
-    checkLoggedIn();
-  });
 </script>
 
 <style>
@@ -36,7 +36,7 @@
     <div class="nav-wrapper grey darken-4">
       <div class="brand-logo">pjournal</div>
       <ul class="col right">
-        {#if isLoggedIn}
+        {#if user}
           <li>
             <button
               class="btn-flat white-text"
@@ -56,14 +56,14 @@
 </nav>
 <div class="container">
   <div class="col">
-    {#if isLoggedIn}
+    {#if user}
       {#if showSettings}
         <Settings on:closeSettings={() => (showSettings = false)} />
       {:else}
         <Homepage />
       {/if}
     {:else}
-      <Login on:loggedIn={checkLoggedIn} />
+      <Login on:signedIn={signedIn} />
     {/if}
   </div>
 </div>

@@ -1,36 +1,55 @@
-export default function request(
-  url: string,
-  method?: string,
-  formData?: object | string,
-  contentType?: string
-) {
-  url = url;
-  method = method || 'GET';
-  formData = formData || null;
-  contentType = contentType || 'application/json';
+import Auth from './Auth';
 
-  const req = new XMLHttpRequest();
-  req.open(method, url);
-  req.setRequestHeader('Content-Type', contentType);
-
-  return new Promise((resolve, reject) => {
-    req.addEventListener('load', () => {
-      if (req.status >= 400) {
-        reject(req.responseText);
-        return;
-      }
-      const contentType = req.getResponseHeader('Content-Type');
-      if (contentType == 'application/json') {
-        resolve(JSON.parse(req.response));
-      }
-      resolve(req.response);
-    });
-    req.addEventListener('error', () => reject(req.statusText));
-    if (contentType == 'application/json' && formData) {
-      formData = JSON.stringify(formData);
-    } else {
-      formData = formData as string;
+export default {
+  get: async (url, params?: Object) => {
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => searchParams.append(k, v));
+      url = `${url}?${searchParams.toString()}`;
     }
-    req.send(formData);
-  });
-}
+    const session = await Auth.currentSession();
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        Authorization: session.getIdToken().getJwtToken(),
+      },
+    });
+    if (response.status >= 300) {
+      throw `${response.status}: ${response.statusText}`;
+    }
+    return response.json();
+  },
+
+  post: async (url, data) => {
+    const session = await Auth.currentSession();
+    const response = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        Authorization: session.getIdToken().getJwtToken(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (response.status >= 300) {
+      throw `${response.status}: ${response.statusText}`;
+    }
+    return response.json();
+  },
+
+  delete: async (url) => {
+    const session = await Auth.currentSession();
+    const response = await fetch(url, {
+      method: 'DELETE',
+      mode: 'cors',
+      headers: {
+        Authorization: session.getIdToken().getJwtToken(),
+      },
+    });
+    if (response.status >= 300) {
+      throw `${response.status}: ${response.statusText}`;
+    }
+    return response.json();
+  },
+};

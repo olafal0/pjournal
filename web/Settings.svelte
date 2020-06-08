@@ -1,7 +1,6 @@
 <script>
   import Homepage from "./Homepage";
   import Login from "./Login";
-  import request from "./request";
   import { localEncryptEnabled, encryptKey } from "./store";
   import { onMount, createEventDispatcher } from "svelte";
 

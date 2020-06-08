@@ -2,10 +2,10 @@
   import Modal from "./Modal";
   import PostEntry from "./PostEntry";
   import request from "./request";
+  import config from "./config";
   import { encryptKey, localEncryptEnabled } from "./store";
   import { encryptPost, decryptPost } from "./cryption";
   import marked from "marked";
-  import hljs from "highlight.js";
   import { createEventDispatcher, onMount } from "svelte";
 
   const dispatch = createEventDispatcher();
@@ -34,7 +34,15 @@
         displayContent = editedContent;
         encrypted = encryptedPost.encrypted;
         editing = false;
-        return request(`/api/post/${id}`, "POST", encryptedPost);
+        const encryptedFullPost = {
+          id,
+          createdAt,
+          updatedAt,
+          encrypted,
+          iv,
+          ...encryptedPost
+        };
+        return request.post(`${config.apiUrl}/post/${id}`, encryptedFullPost);
       })
       .catch(error => {
         updateError = error;
@@ -62,13 +70,7 @@
 
   onMount(() => {
     marked.setOptions({
-      gfm: true,
-      highlight: function(code, language) {
-        const validLanguage = hljs.getLanguage(language)
-          ? language
-          : "plaintext";
-        return hljs.highlight(validLanguage, code).value;
-      }
+      gfm: true
     });
 
     decryptPost(

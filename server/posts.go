@@ -1,163 +1,126 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
+	"net/http"
+	"strconv"
 	"time"
 
+	"server/dbinterface"
+
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/flick-web/dispatch"
-	"github.com/sethvargo/go-diceware/diceware"
 )
 
-// JPost represents a journal post, storing its ID along with its content.
-type JPost struct {
-	ID       string `json:"id,omitempty"`
-	Username string `json:"username,omitempty"`
-	// Content is the text content of the post, or, if the post was encrypted, a
-	// string of unicode code points representing the binary encrypted data of the post.
-	Content   string `json:"content,omitempty"`
-	CreatedAt int64  `json:"createdAt,omitempty"`
-	UpdatedAt int64  `json:"updatedAt,omitempty"`
-	Encrypted bool   `json:"encrypted"`
-	// IV is the initialization vector used when encrypting this post client-side.
-	// If encryption was not enabled for this post, it will be empty.
-	IV string `json:"iv,omitempty"`
-}
+var errorMissingID = errors.New("no id specified")
+var errorInternal = errors.New(http.StatusText(http.StatusInternalServerError))
 
-// NewPost represents input from the client requesting a new post. This can also
-// be used for updating existing posts.
-type NewPost struct {
-	Content   string `json:"content,omitempty"`
-	Encrypted bool   `json:"encrypted"`
-	IV        string `json:"iv,omitempty"`
-}
-
-func getPostIDs(username string) ([]string, error) {
-	postIDs := make([]string, 0, 16)
-	err := db.Get(fmt.Sprintf("posts_%s", username), "id_list", &postIDs)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, err
-	}
-	return postIDs, nil
-}
-
-func createPost(newPost NewPost, ctx *dispatch.Context) (id string, err error) {
-	// Generate random title-cased list of words to use as the ID
-	// TODO: remove assumption that generated ID is unique
-	username := ctx.Claims.Subject
-	postIDs, err := getPostIDs(username)
-	if err != nil {
-		return "", err
-	}
-
-	words, _ := diceware.Generate(3)
-	id = strings.ReplaceAll(strings.Title(strings.Join(words, " ")), " ", "")
-	post := JPost{
-		ID:        id,
-		Content:   newPost.Content,
-		CreatedAt: time.Now().UnixNano() / 1e6,
-		Username:  ctx.Claims.Subject,
-		Encrypted: newPost.Encrypted,
-		IV:        newPost.IV,
-	}
-	err = db.Set(fmt.Sprintf("posts_%s", username), id, post)
-	if err != nil {
-		return "", err
-	}
-	postIDs = append(postIDs, id)
-	err = db.Set(fmt.Sprintf("posts_%s", username), "id_list", postIDs)
-	if err != nil {
-		return "", err
-	}
+func ctxToUserID(ctx events.APIGatewayProxyRequestContext) (id string, err error) {
+	// AWS wraps claims.sub inside of an interface{}, inside of a map[string]interface{},
+	// inside of another map[string]interface{}. This means there are four different
+	// points at which this function might panic if we don't explicitly error check.
+	// This is ridiculous, so just assume everything will go fine and recover in
+	// case of panic.
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("ctxToUserID panic: %v\n", r)
+			err = errorInternal
+			return
+		}
+	}()
+	claims := ctx.Authorizer["claims"]
+	claimsMap := claims.(map[string]interface{})
+	userID := claimsMap["sub"]
+	id = userID.(string)
 	return id, nil
 }
 
-func getPost(ctx *dispatch.Context) (*JPost, error) {
-	username := ctx.Claims.Subject
-	result := JPost{}
-	err := db.Get(fmt.Sprintf("posts_%s", username), ctx.PathVars["id"], &result)
-	return &result, err
+func createPost(post *dbinterface.JPost, ctx *dispatch.Context) (id string, err error) {
+	userID, err := ctxToUserID(ctx.LambdaRequest.RequestContext)
+	if err != nil {
+		return "", err
+	}
+	post.UserID = userID
+	post.CreatedAt = time.Now().UnixNano() / 1e6
+	return db.CreatePost(*post)
 }
 
-func updatePost(newPost NewPost, ctx *dispatch.Context) (err error) {
-	username := ctx.Claims.Subject
-	postID := ctx.PathVars["id"]
-
-	post := JPost{}
-	err = db.Get(fmt.Sprintf("posts_%s", username), postID, &post)
-	if err != nil {
-		return err
-	}
-
-	post.Content = newPost.Content
-	post.UpdatedAt = time.Now().UnixNano() / 1e6
-	post.Encrypted = newPost.Encrypted
-	post.IV = newPost.IV
-
-	err = db.Set(fmt.Sprintf("posts_%s", username), postID, post)
-	if err != nil {
-		return err
-	}
-	return nil
+type postsList struct {
+	Posts         []dbinterface.JPost `json:"posts"`
+	LastEvaluated *dbinterface.JPost  `json:"lastEvaluated,omitempty"`
 }
 
-func listPosts(ctx *dispatch.Context) ([]JPost, error) {
-	username := ctx.Claims.Subject
-	postIDs, err := getPostIDs(username)
+func getPosts(ctx *dispatch.Context) (*postsList, error) {
+	// Get number of posts to limit query to
+	var nPosts int64
+	nPostsStr, ok := ctx.LambdaRequest.QueryStringParameters["n"]
+	if ok {
+		var err error
+		nPosts, err = strconv.ParseInt(nPostsStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Get user ID from authorization context
+	userID, err := ctxToUserID(ctx.LambdaRequest.RequestContext)
 	if err != nil {
 		return nil, err
 	}
 
-	postsPerPage := 25
-	posts := make([]JPost, 0, postsPerPage)
-
-	// postIDs will be most recent first
-	var searchSet []string
-	// If we have less than postsPerPage, return all
-	if len(postIDs) <= postsPerPage {
-		searchSet = postIDs
-	} else {
-		// otherwise, return the last postsPerPage
-		searchSet = postIDs[len(postIDs)-postsPerPage:]
-	}
-	for _, id := range searchSet {
-		retrievedPost := JPost{}
-		err := db.Get(fmt.Sprintf("posts_%s", username), id, &retrievedPost)
+	// Get fromId and fromTime, parameters that are used to determine the last
+	// evaluated item for pagination purposes
+	var startFromPost *dbinterface.JPost
+	startFromID, idOK := ctx.LambdaRequest.QueryStringParameters["fromId"]
+	startFromTimestampStr, timeOK := ctx.LambdaRequest.QueryStringParameters["fromTime"]
+	if idOK && timeOK {
+		startFromTimestamp, err := strconv.ParseInt(startFromTimestampStr, 10, 64)
 		if err != nil {
-			return nil, err
+			fmt.Printf("Error parsing fromTime query parameter: %v\n", err)
+		} else {
+			startFromPost = &dbinterface.JPost{
+				ID:        startFromID,
+				UserID:    userID,
+				CreatedAt: startFromTimestamp,
+			}
 		}
-		posts = append(posts, retrievedPost)
 	}
-	return posts, nil
+
+	posts, lastEval, err := db.GetLastPosts(userID, nPosts, startFromPost)
+	if err != nil {
+		return nil, err
+	}
+	postsResult := postsList{
+		Posts:         posts,
+		LastEvaluated: lastEval,
+	}
+	return &postsResult, nil
+}
+
+func updatePost(post dbinterface.JPost, ctx *dispatch.Context) error {
+	id, ok := ctx.PathVars["id"]
+	if !ok || id == "undefined" || id == "null" {
+		return errorMissingID
+	}
+	post.ID = id
+	userID, err := ctxToUserID(ctx.LambdaRequest.RequestContext)
+	if err != nil {
+		return err
+	}
+	post.UserID = userID
+	post.UpdatedAt = time.Now().UnixNano() / 1e6
+	return db.UpdatePost(post)
 }
 
 func deletePost(ctx *dispatch.Context) error {
-	username := ctx.Claims.Subject
-	postIDs, err := getPostIDs(username)
+	id, ok := ctx.PathVars["id"]
+	if !ok {
+		return errorMissingID
+	}
+	userID, err := ctxToUserID(ctx.LambdaRequest.RequestContext)
 	if err != nil {
 		return err
 	}
-	postID := ctx.PathVars["id"]
-	err = db.Delete(fmt.Sprintf("posts_%s", username), postID)
-	if err != nil {
-		return err
-	}
-
-	postIndex, err := func() (int, error) {
-		for i, v := range postIDs {
-			if v == postID {
-				return i, nil
-			}
-		}
-		return 0, errors.New("Post not found for ID")
-	}()
-	if err != nil {
-		return err
-	}
-
-	postIDs = append(postIDs[:postIndex], postIDs[postIndex+1:]...)
-	err = db.Set(fmt.Sprintf("posts_%s", username), "id_list", postIDs)
-	return err
+	return db.DeletePost(id, userID)
 }

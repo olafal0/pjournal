@@ -1,0 +1,208 @@
+Parameters:
+  DeploymentBucket:
+    Type: String
+  APILambdaKey:
+    Type: String
+  APILambdaVersion:
+    Type: String
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: CognitoPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: cognito-idp:*
+                Resource: !GetAtt PjournalUserPool.Arn
+        - PolicyName: AllowLogging
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt APIHandlerLogGroup.Arn
+              - Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+        - PolicyName: AllowDynamoAccess
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: dynamodb:*
+                Resource:
+                  - !GetAtt PostsTable.Arn
+                  - !Sub ${PostsTable.Arn}/index/*
+
+  APIHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AWS::StackName}-api
+      RetentionInDays: 30
+
+  APIHandlerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-api
+      Timeout: 30
+      Environment:
+        Variables:
+          COGNITO_USER_POOL_ID: !Ref PjournalUserPool
+          POSTS_TABLE_NAME: !Ref PostsTable
+      Handler: pjournal-api
+      Runtime: go1.x
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Ref APILambdaKey
+        S3ObjectVersion: !Ref APILambdaVersion
+
+  APIHandlerLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref APIHandlerLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BackendAPI}/*/*/*
+
+  PostsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: "N"
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: userId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: userId-createdAt-index
+          Projection:
+            ProjectionType: ALL
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  BackendAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub ${AWS::StackName}-backend-api
+      EndpointConfiguration:
+        Types:
+          - EDGE
+
+  BackendAPIMainResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt BackendAPI.RootResourceId
+      PathPart: "{proxy+}"
+      RestApiId: !Ref BackendAPI
+
+  BackendAPIProxy:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref PjournalAPICognitoAuthorizer
+      # ApiKeyRequired: true
+      HttpMethod: ANY
+      ResourceId: !Ref BackendAPIMainResource
+      RestApiId: !Ref BackendAPI
+      RequestParameters:
+        method.request.path.proxy: true
+        method.request.header.Authorization: true
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandlerLambda.Arn}/invocations
+
+  # Define a specific OPTIONS endpoint without authorization. This is required for
+  # CORS preflight requests, which do not include authorization information.
+  BackendAPIOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      # ApiKeyRequired: true
+      HttpMethod: OPTIONS
+      ResourceId: !Ref BackendAPIMainResource
+      RestApiId: !Ref BackendAPI
+      RequestParameters:
+        method.request.path.proxy: true
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandlerLambda.Arn}/invocations
+
+  # BackendAPIDeployment will not update by default
+  BackendAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref BackendAPI
+    DependsOn:
+      - BackendAPIProxy
+      - BackendAPIOptions
+
+  BackendAPIStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref BackendAPI
+      DeploymentId: !Ref BackendAPIDeployment
+      StageName: api
+
+  PjournalUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub ${AWS::StackName}-userpool
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+
+  PjournalAPICognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: !Sub ${AWS::StackName}-authorizer
+      IdentitySource: method.request.header.Authorization
+      ProviderARNs:
+        - !GetAtt PjournalUserPool.Arn
+      RestApiId: !Ref BackendAPI
+      Type: COGNITO_USER_POOLS
+
+  PjournalCognitoWebClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref PjournalUserPool
+
+Outputs:
+  UserPoolId:
+    Description: Cognito user pool ID
+    Value: !Ref PjournalUserPool
+  WebClientId:
+    Value: !Ref PjournalCognitoWebClient
+  BackendAPIId:
+    Value: !Ref BackendAPI

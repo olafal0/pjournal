@@ -4,15 +4,14 @@
   "description": "",
   "main": "index.ts",
   "dependencies": {
-    "highlight.js": "^9.18.1",
+    "@aws-amplify/auth": "^3.2.12",
+    "@types/materialize-css": "^1.0.7",
     "marked": "^0.8.2",
     "material-design-icons": "^3.0.1",
-    "materialize-css": "^1.0.0"
-  },
-  "devDependencies": {
-    "@types/materialize-css": "^1.0.7",
+    "materialize-css": "^1.0.0",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-svelte": "^4.0.6",
+    "prismjs": "^1.20.0",
     "svelte": "^3.20.1",
     "typescript": "^3.8.3"
   },

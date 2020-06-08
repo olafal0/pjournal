@@ -1,5 +1,6 @@
 <script>
   import Post from "./Post";
+  import config from "./config";
   import PostEntry from "./PostEntry.svelte";
   import { onMount } from "svelte";
   import request from "./request.ts";
@@ -9,16 +10,16 @@
   let postInProgress = false;
   let postError = null;
 
-  function loadPosts() {
-    request("/api/posts/all", "GET").then(p => {
-      p.reverse();
-      posts = p;
-    });
+  // loadPosts loads the initial page of posts only
+  async function loadPosts() {
+    const response = await request.get(`${config.apiUrl}/posts?n=25`);
+    posts = response.posts;
   }
 
   function deletePost(event) {
     const id = event.detail;
-    request(`/api/post/${id}`, "DELETE")
+    request
+      .delete(`${config.apiUrl}/post/${id}`)
       .then(loadPosts)
       .catch(error => {
         postError = error;

@@ -1,0 +1,16 @@
+Resources:
+  DeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - NoncurrentVersionExpirationInDays: 7
+            Status: Enabled
+Outputs:
+  DeploymentBucket:
+    Description: Physical resource ID of the bucket used for uploading deployments.
+    Value:
+      Ref: DeploymentBucket
