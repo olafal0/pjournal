@@ -28,6 +28,9 @@
 <style>
   nav .brand-logo {
     padding: 0px 10px;
+    /* Remove centering that's applied on small screens */
+    left: unset;
+    transform: unset;
   }
 </style>
 
