@@ -2,6 +2,7 @@
 
 set -e
 source scripts/aws-tools.sh
+test -f scripts/env.sh && source scripts/env.sh
 
 # Check dependencies
 source scripts/depcheck.sh
@@ -22,4 +23,6 @@ deployStack pjournal.yml $prefix "
     --parameter-overrides
         APILambdaKey=lambdas/pjournal-api.zip
         APILambdaVersion=$LAMBDA_S3_VERSION
-        DeploymentBucket=$deploymentBucket"
+        DeploymentBucket=$deploymentBucket
+        SenderEmailArn=$SENDER_EMAIL_ARN
+        WebhookURL=$WEBHOOK_URL"

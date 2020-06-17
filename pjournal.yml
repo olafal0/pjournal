@@ -5,6 +5,18 @@ Parameters:
     Type: String
   APILambdaVersion:
     Type: String
+  SenderEmailArn:
+    Type: String
+  WebhookURL:
+    Type: String
+    NoEcho: true
+
+Conditions:
+  HasWebhook:
+    Fn::Not:
+      - Fn::Equals:
+        - ""
+        - !Ref WebhookURL
 
 Resources:
   LambdaRole:
@@ -33,9 +45,6 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: !GetAtt APIHandlerLogGroup.Arn
-              - Effect: Allow
-                Action: cloudwatch:PutMetricData
-                Resource: "*"
         - PolicyName: AllowDynamoAccess
           PolicyDocument:
             Statement:
@@ -182,6 +191,14 @@ Resources:
           RequireNumbers: false
           RequireSymbols: false
           RequireUppercase: false
+      LambdaConfig:
+        Fn::If:
+          - HasWebhook
+          - PostConfirmation: !GetAtt AlertsLambda.Arn
+          - !Ref AWS::NoValue
+      EmailConfiguration:
+        EmailSendingAccount: DEVELOPER
+        SourceArn: !Ref SenderEmailArn
 
   PjournalAPICognitoAuthorizer:
     Type: AWS::ApiGateway::Authorizer
@@ -197,6 +214,76 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId: !Ref PjournalUserPool
+
+  AlertsLambdaRole:
+    Type: AWS::IAM::Role
+    Condition: HasWebhook
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: AllowLogging
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt AlertsHandlerLogGroup.Arn
+
+  AlertsLambda:
+    Type: AWS::Lambda::Function
+    Condition: HasWebhook
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-alerts
+      Timeout: 30
+      Handler: index.lambda_handler
+      Runtime: python3.7
+      Role: !GetAtt AlertsLambdaRole.Arn
+      Environment:
+        Variables:
+          WEBHOOK_URL: !Ref WebhookURL
+      Code:
+        ZipFile: |
+          import urllib3
+          import json
+          import os
+          http = urllib3.PoolManager()
+          def lambda_handler(event, context):
+            try:
+              url = os.getenv('WEBHOOK_URL')
+              msg = {
+                  'username': 'pjournal signups',
+                  'content': f'{event["userName"]} just signed up!',
+              }
+              encoded_msg = json.dumps(msg).encode('utf-8')
+              resp = http.request('POST', url, body=encoded_msg, headers={'Content-Type': 'application/json'})
+              print(resp.status, resp.data)
+            except Exception as e:
+              print(e)
+            return event
+
+  AlertsHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: HasWebhook
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AWS::StackName}-alerts
+      RetentionInDays: 7
+
+  AlertsLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Condition: HasWebhook
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt AlertsLambda.Arn
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt PjournalUserPool.Arn
 
 Outputs:
   UserPoolId:
