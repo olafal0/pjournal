@@ -17,6 +17,11 @@ Conditions:
       - Fn::Equals:
         - ""
         - !Ref WebhookURL
+  HasSenderEmail:
+    Fn::Not:
+      - Fn::Equals:
+        - ""
+        - !Ref SenderEmailArn
 
 Resources:
   LambdaRole:
@@ -133,7 +138,6 @@ Resources:
     Properties:
       AuthorizationType: COGNITO_USER_POOLS
       AuthorizerId: !Ref PjournalAPICognitoAuthorizer
-      # ApiKeyRequired: true
       HttpMethod: ANY
       ResourceId: !Ref BackendAPIMainResource
       RestApiId: !Ref BackendAPI
@@ -151,7 +155,6 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
-      # ApiKeyRequired: true
       HttpMethod: OPTIONS
       ResourceId: !Ref BackendAPIMainResource
       RestApiId: !Ref BackendAPI
@@ -177,6 +180,11 @@ Resources:
       RestApiId: !Ref BackendAPI
       DeploymentId: !Ref BackendAPIDeployment
       StageName: api
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingRateLimit: 10
+          ThrottlingBurstLimit: 10
 
   PjournalUserPool:
     Type: AWS::Cognito::UserPool
@@ -197,8 +205,11 @@ Resources:
           - PostConfirmation: !GetAtt AlertsLambda.Arn
           - !Ref AWS::NoValue
       EmailConfiguration:
-        EmailSendingAccount: DEVELOPER
-        SourceArn: !Ref SenderEmailArn
+        Fn::If:
+          - HasSenderEmail
+          - EmailSendingAccount: DEVELOPER
+            SourceArn: !Ref SenderEmailArn
+          - EmailSendingAccount: COGNITO_DEFAULT
 
   PjournalAPICognitoAuthorizer:
     Type: AWS::ApiGateway::Authorizer
