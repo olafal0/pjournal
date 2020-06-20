@@ -9,3 +9,25 @@ You can try it out here: https://journal.olafalo.net
 ![pjournal screenshot](/screenshots/pjournal-2020-03-30.png?raw=true)
 
 pjournal is made using [dispatch](https://github.com/flick-web/dispatch), [Parcel](https://parceljs.org), [Svelte](https://svelte.dev), and [Marked.js](https://marked.js.org).
+
+## Deploying
+
+Prerequisites:
+
+- An AWS account
+- Correctly configured `awscli` (or `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` set if running from GitLab CI)
+- `jq` installed
+- (Optional) Somewhere to host a static website (GitHub/GitLab pages, Netlify, etc)
+
+Once everything is set up, just clone this repository, `cd` into it, and run:
+
+```sh
+./scripts/deploy.sh # Deploy the backend on AWS
+./scripts/generate-config.sh # Generate website configuration from the deployed backend
+cd web # Change to the frontend directory
+npm install # Install dependencies
+npm install --global parcel-bundler # Install the parcel CLI tool
+parcel index.html # Run the site locally for testing
+```
+
+You can then view the website locally (on http://localhost:1234 by default). The website will automatically be configured to use the your backend stack on AWS, so you can register and start using it! To host the site somewhere, you'll just need to build the site with parcel and upload the resulting files to any kind of static site host.
