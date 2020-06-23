@@ -12,12 +12,13 @@
   export let postError = null;
   export let update = false;
   export let id = "";
+  export let encrypted = $localEncryptEnabled;
 
   let textarea;
   let textareaStyle;
 
   function submitContent() {
-    encryptPost(newPostContent, $localEncryptEnabled, $encryptKey)
+    encryptPost(newPostContent, $localEncryptEnabled && encrypted, $encryptKey)
       .then(postData => {
         return request
           .post(`${config.apiUrl}/posts/new`, postData)
@@ -106,7 +107,7 @@
         Cancel
       </button>
       <button
-        class="btn blue darken-4 right"
+        class="btn blue darken-4"
         on:click={() => dispatch('updatePost')}
         on:click={updateFieldHeight}>
         Submit
@@ -114,5 +115,9 @@
     {:else}
       <button class="btn blue darken-4" on:click={submitContent}>Submit</button>
     {/if}
+    <label class="right">
+      <input type="checkbox" bind:checked={encrypted} />
+      <span>Encrypt</span>
+    </label>
   </div>
 </div>

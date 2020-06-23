@@ -1,6 +1,7 @@
 <script>
   import Auth from "./Auth";
   import { onMount, createEventDispatcher } from "svelte";
+  import { localEncryptEnabled, encryptKey } from "./store";
 
   const dispatch = createEventDispatcher();
 
@@ -110,7 +111,18 @@
   function signIn() {
     displayInfo("Signing in...");
     Auth.signIn(formFields.email, formFields.password)
-      .then(signedIn)
+      .then(() => {
+        // If local encryption is not already enabled, set it using the login password
+        // This isn't as secure as a separate password, but given the threat model,
+        // it hardly makes a difference
+        if (!$localEncryptEnabled) {
+          localEncryptEnabled.set(true);
+          // Setting the encryption key generates it from the given password;
+          // the password is not stored in plaintext
+          encryptKey.set(formFields.password);
+        }
+        signedIn();
+      })
       .catch(err => {
         if (err.code === "UserNotConfirmedException") {
           displayInfo(

@@ -15,12 +15,12 @@ export async function createKey(pw, salt) {
       name: 'PBKDF2',
       salt,
       iterations: 10000,
-      hash: 'SHA-256'
+      hash: 'SHA-256',
     },
     cryptoPw,
     {
       name: 'AES-CBC',
-      length: 256
+      length: 256,
     },
     true, // must be able to export to save locally
     ['encrypt', 'decrypt']
@@ -49,7 +49,7 @@ async function encrypt(exportedKey, content) {
   const ciphertext = await crypto.subtle.encrypt(
     {
       name: 'AES-CBC',
-      iv
+      iv,
     },
     key,
     enc.encode(content)
@@ -79,18 +79,22 @@ async function decrypt(exportedKey, ciphertext, iv) {
 }
 
 export async function encryptPost(content, encryptEnabled, key) {
-  if (encryptEnabled == 'true') {
+  if (encryptEnabled) {
     const { ciphertext, iv } = await encrypt(JSON.parse(key), content);
     const ciphertextView = new Uint8Array(ciphertext);
 
     return {
       content: String.fromCodePoint(...ciphertextView),
       iv: String.fromCodePoint(...iv),
-      encrypted: true
+      encrypted: true,
     };
   }
 
-  return { content };
+  return {
+    content,
+    encrypted: false,
+    iv: '',
+  };
 }
 
 export async function decryptPost(

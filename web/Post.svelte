@@ -29,10 +29,11 @@
 
   function updatePost() {
     updateInProgress = true;
-    encryptPost(editedContent, $localEncryptEnabled, $encryptKey)
+    encryptPost(editedContent, $localEncryptEnabled && encrypted, $encryptKey)
       .then(encryptedPost => {
         displayContent = editedContent;
         encrypted = encryptedPost.encrypted;
+        iv = encryptedPost.iv;
         editing = false;
         const encryptedFullPost = {
           id,
@@ -79,7 +80,7 @@
         encrypted,
         iv
       },
-      $localEncryptEnabled == "true",
+      $localEncryptEnabled,
       $encryptKey
     ).then(c => {
       displayContent = c;
@@ -102,6 +103,7 @@
     {#if editing}
       <PostEntry
         bind:newPostContent={editedContent}
+        bind:encrypted
         {id}
         postInProgress={updateInProgress}
         on:updatePost={updatePost}

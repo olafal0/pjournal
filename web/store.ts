@@ -4,7 +4,12 @@ import { createKey } from './cryption';
 // local storage automatically.
 function persistentStore(key, setHook?: Function) {
   let subscribers = [];
-  let _value = localStorage.getItem(key) || '';
+  let _value: any;
+  _value = localStorage.getItem(key) || '';
+  // Special handling for boolean values
+  if (_value === 'true' || _value === 'false') {
+    _value = _value === 'true';
+  }
 
   return {
     get() {
@@ -15,7 +20,7 @@ function persistentStore(key, setHook?: Function) {
       listener(_value);
       subscribers.push(listener);
       return () => {
-        subscribers = subscribers.filter(sub => sub !== listener);
+        subscribers = subscribers.filter((sub) => sub !== listener);
       };
     },
 
@@ -26,8 +31,8 @@ function persistentStore(key, setHook?: Function) {
         _value = newValue;
       }
       localStorage.setItem(key, _value);
-      subscribers.forEach(s => s(_value));
-    }
+      subscribers.forEach((s) => s(_value));
+    },
   };
 }
 
@@ -37,7 +42,7 @@ export const localEncryptEnabled = persistentStore('pjournal-encrypt-enabled');
 // encryptKey can be set with a password, and will automatically derive an
 // AES-CBC JSON Web Key using PBKDF2 and store it. Accessing this value will return
 // a stringified JWK object, not the password that it's set with.
-export const encryptKey = persistentStore('pjournal-local-key', async pw => {
+export const encryptKey = persistentStore('pjournal-local-key', async (pw) => {
   if (!localEncryptEnabled.get || !pw) {
     return '';
   }

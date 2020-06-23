@@ -6,17 +6,19 @@
 
   const dispatch = createEventDispatcher();
 
-  let localEncryptionEnabled = $localEncryptEnabled == "true";
-  let localEncryptPass = "";
+  let settings = {
+    encryption: $localEncryptEnabled,
+    encryptPass: ""
+  };
 
   function savePrefs() {
-    localEncryptEnabled.set(localEncryptionEnabled ? "true" : "false");
-    encryptKey.set(localEncryptPass);
+    localEncryptEnabled.set(settings.encryption);
+    encryptKey.set(settings.encryptPass);
     dispatch("closeSettings");
   }
 
   function closeSettings() {
-    localEncryptionEnabled = $localEncryptEnabled == "true";
+    settings.encryption = $localEncryptEnabled;
     dispatch("closeSettings");
   }
 </script>
@@ -45,7 +47,7 @@
           <p>Please use a different password than your account password.</p>
           <br />
           <label class="white-text">
-            <input type="checkbox" bind:checked={localEncryptionEnabled} />
+            <input type="checkbox" bind:checked={settings.encryption} />
             <span>Enable local encryption</span>
           </label>
           <form id="settings-form" on:submit|preventDefault={savePrefs}>
@@ -56,8 +58,8 @@
                 type="password"
                 id="encryption-pass"
                 name="encryption-pass"
-                bind:value={localEncryptPass}
-                disabled={!localEncryptionEnabled} />
+                bind:value={settings.encryptPass}
+                disabled={!settings.encryption} />
               <span>Local encryption password</span>
             </label>
             <input type="submit" class="hide" />
