@@ -20,6 +20,7 @@ echo "version: $LAMBDA_S3_VERSION"
 
 deployStack pjournal.yml $prefix "
     --capabilities CAPABILITY_IAM
+    --tags project=pjournal
     --parameter-overrides
         APILambdaKey=lambdas/pjournal-api.zip
         APILambdaVersion=$LAMBDA_S3_VERSION
