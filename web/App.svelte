@@ -25,48 +25,25 @@
   }
 </script>
 
-<style>
-  nav .brand-logo {
-    padding: 0px 10px;
-    /* Remove centering that's applied on small screens */
-    left: unset;
-    transform: unset;
-  }
-</style>
-
 <nav>
-  <div class="row">
-    <div class="nav-wrapper grey darken-4">
-      <div class="brand-logo">pjournal</div>
-      <ul class="col right">
-        {#if user}
-          <li>
-            <button
-              class="btn-flat white-text"
-              on:click={() => (showSettings = !showSettings)}>
-              Settings
-            </button>
-          </li>
-          <li>
-            <button class="btn-flat white-text" on:click={logout}>
-              Log Out
-            </button>
-          </li>
-        {/if}
-      </ul>
-    </div>
-  </div>
-</nav>
-<div class="container">
-  <div class="col">
+  <h1>pjournal</h1>
+  <div class="right">
     {#if user}
-      {#if showSettings}
-        <Settings on:closeSettings={() => (showSettings = false)} />
-      {:else}
-        <Homepage />
-      {/if}
-    {:else}
-      <Login on:signedIn={signedIn} />
+      <button
+        class="borderless"
+        on:click={() => (showSettings = !showSettings)}>
+        Settings
+      </button>
+      <button class="borderless" on:click={logout}>Log Out</button>
     {/if}
   </div>
-</div>
+</nav>
+{#if user}
+  {#if showSettings}
+    <Settings on:closeSettings={() => (showSettings = false)} />
+  {:else}
+    <Homepage />
+  {/if}
+{:else}
+  <Login on:signedIn={signedIn} />
+{/if}

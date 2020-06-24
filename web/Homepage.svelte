@@ -29,7 +29,7 @@
   onMount(loadPosts);
 </script>
 
-<div>
+<div class="container">
   <PostEntry on:newPostTrigger={loadPosts} />
   {#each posts as post (post.id)}
     <Post {...post} on:deletePost={deletePost} />

@@ -172,116 +172,62 @@
   }
 </script>
 
-<style>
-  .info-message {
-    margin: 10px;
-    padding: 5px;
-    border: 1px solid rgba(0, 195, 209, 0.5);
-    border-radius: 5px;
-    color: antiquewhite;
-  }
-
-  .error-message {
-    margin: 10px;
-    padding: 5px;
-    border: 1px solid rgba(209, 0, 0, 0.5);
-    border-radius: 5px;
-    color: rgb(250, 208, 153);
-  }
-</style>
-
-<div class="row">
-  <div class="col l8 offset-l2 m10 offset-m1 s12 center">
-    <div class="card grey darken-4">
-      {#if errorMessage}
-        <div class="col s12">
-          <div class="error-message">{errorMessage}</div>
-        </div>
-      {:else if infoMessage}
-        <div class="col s12">
-          <div class="info-message">{infoMessage}</div>
-        </div>
-      {/if}
-      <div class="card-content white-text">
-        <div class="row">
-          <h5 class="card-title">Log in</h5>
-          {#if flowState === FlowState.initial}
-            <form on:submit|preventDefault={signIn}>
-              <div class="form-group">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  class="white-text form-control"
-                  bind:value={formFields.email} />
-              </div>
-              <div class="form-group">
-                <label>Password</label>
-                <input
-                  type="button"
-                  class="btn btn-flat btn-small grey darken-4 grey-text"
-                  on:click={startPasswordReset}
-                  value="(Forgot password?)" />
-                <input
-                  type="password"
-                  class="white-text form-control"
-                  bind:value={formFields.password} />
-              </div>
-              <input
-                type="button"
-                class="btn grey darken-2 left"
-                on:click={signUp}
-                value="Register" />
-              <input type="submit" class="btn right" value="Log In" />
-            </form>
-          {:else if flowState === FlowState.signUpConfirmation}
-            <form on:submit|preventDefault={confirmSignUp}>
-              <div class="form-group">
-                <label>Confirmation Code</label>
-                <input
-                  type="text"
-                  class="white-text form-control"
-                  bind:value={formFields.confirmationCode} />
-              </div>
-              <input
-                type="button"
-                class="btn grey darken-2 left"
-                on:click={resendCode}
-                value="Resend Confirmation Code" />
-              <input type="submit" class="btn right" value="Confirm" />
-            </form>
-          {:else if flowState === FlowState.forgotPassword}
-            <form on:submit|preventDefault={confirmResetPassword}>
-              <div class="form-group">
-                <label>New Password</label>
-                <input
-                  type="password"
-                  class="white-text form-control"
-                  bind:value={formFields.newPassword} />
-              </div>
-              <div class="form-group">
-                <label>Confirmation Code</label>
-                <input
-                  type="text"
-                  class="white-text form-control"
-                  bind:value={formFields.confirmationCode} />
-              </div>
-              <div class="left">
-                <input
-                  type="button"
-                  class="btn grey darken-2"
-                  on:click={cancelPasswordReset}
-                  value="Cancel Reset" />
-                <input
-                  type="button"
-                  class="btn grey darken-2"
-                  on:click={startPasswordReset}
-                  value="Resend Code" />
-              </div>
-              <input type="submit" class="btn right" value="Confirm" />
-            </form>
-          {/if}
-        </div>
-      </div>
-    </div>
+<div class="container">
+  <div class="card">
+    {#if errorMessage}
+      <div class="error-message">{errorMessage}</div>
+    {:else if infoMessage}
+      <div class="info-message">{infoMessage}</div>
+    {/if}
+    <h2>Log in</h2>
+    {#if flowState === FlowState.initial}
+      <form on:submit|preventDefault={signIn}>
+        <label>
+          Email Address
+          <input type="email" bind:value={formFields.email} />
+        </label>
+        <label for="password">Password</label>
+        <input
+          type="button"
+          class="borderless small"
+          on:click={startPasswordReset}
+          value="(Forgot password?)" />
+        <input type="password" id="password" bind:value={formFields.password} />
+        <input type="button" on:click={signUp} value="Register" />
+        <input type="submit" class="right" value="Log In" />
+      </form>
+    {:else if flowState === FlowState.signUpConfirmation}
+      <form on:submit|preventDefault={confirmSignUp}>
+        <label>
+          Confirmation Code
+          <input type="text" bind:value={formFields.confirmationCode} />
+        </label>
+        <input
+          type="button"
+          on:click={resendCode}
+          value="Resend Confirmation Code" />
+        <input type="submit" class="right" value="Confirm" />
+      </form>
+    {:else if flowState === FlowState.forgotPassword}
+      <form on:submit|preventDefault={confirmResetPassword}>
+        <label>
+          New Password
+          <input type="password" bind:value={formFields.newPassword} />
+        </label>
+        <label>
+          Confirmation Code
+          <input type="text" bind:value={formFields.confirmationCode} />
+        </label>
+        <input
+          type="button"
+          on:click={cancelPasswordReset}
+          value="Cancel Reset" />
+        <input
+          type="button"
+          on:click={startPasswordReset}
+          value="Resend Code" />
+        <input type="submit" class="right" value="Confirm" />
+      </form>
+    {/if}
   </div>
 </div>

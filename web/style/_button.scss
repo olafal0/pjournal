@@ -1,0 +1,38 @@
+@use 'variables';
+
+input[type='button'],
+input[type='submit'],
+button {
+  color: variables.$text-dark;
+  background-color: variables.$attn-neutral;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+input[type='submit'],
+button.primary {
+  background-color: variables.$attn-primary;
+}
+
+button.danger {
+  background-color: variables.$attn-danger;
+}
+
+input[type='button'].borderless,
+input[type='submit'].borderless,
+button.borderless {
+  border: none;
+  background-color: transparent;
+  color: variables.$text-light;
+  padding: 5px;
+}
+
+input[type='button'].small,
+input[type='submit'].small,
+button.small {
+  font-size: 75%;
+  margin: 0;
+}

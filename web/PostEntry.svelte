@@ -68,7 +68,6 @@
   .pj-textarea {
     background-color: transparent;
     line-height: 1.5em;
-    border: 1px solid grey;
     width: 100%;
     outline: none;
     min-height: 3em;
@@ -76,17 +75,14 @@
     box-sizing: border-box;
     overflow-y: hidden;
     padding: 10px;
-  }
-
-  .card {
-    padding: 10px 0px;
+    margin-bottom: 15px;
   }
 </style>
 
-<div class="card grey darken-4">
-  <div class="card-content">
+<div class="card">
+  <form on:submit|preventDefault>
     {#if postError}
-      <div class="red-text">{postError}</div>
+      <div class="error-message">{postError}</div>
     {/if}
     <textarea
       disabled={postInProgress}
@@ -96,28 +92,25 @@
       id="post-text-field{id}"
       spellcheck="true"
       placeholder="How was your day?"
-      class="pj-textarea input-field white-text" />
-  </div>
-  <div class="card-action">
+      class="pj-textarea" />
     {#if update}
       <button
-        class="btn grey darken-2"
         on:click={() => dispatch('cancelEdit')}
         on:click={updateFieldHeight}>
         Cancel
       </button>
       <button
-        class="btn blue darken-4"
+        class="primary right"
         on:click={() => dispatch('updatePost')}
         on:click={updateFieldHeight}>
         Submit
       </button>
     {:else}
-      <button class="btn blue darken-4" on:click={submitContent}>Submit</button>
+      <button class="primary" on:click={submitContent}>Submit</button>
     {/if}
     <label class="right">
       <input type="checkbox" bind:checked={encrypted} />
       <span>Encrypt</span>
     </label>
-  </div>
+  </form>
 </div>

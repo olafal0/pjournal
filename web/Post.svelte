@@ -98,69 +98,51 @@
   }
 </style>
 
-<div class="row">
-  <div class="col l8 s12 offset-l2">
-    {#if editing}
-      <PostEntry
-        bind:newPostContent={editedContent}
-        bind:encrypted
-        {id}
-        postInProgress={updateInProgress}
-        on:updatePost={updatePost}
-        update="true"
-        on:cancelEdit={() => {
-          editing = false;
-        }} />
-    {:else}
-      <div
-        class="card grey darken-4"
-        on:mouseenter={() => (hovering = true)}
-        on:mouseleave={() => (hovering = false)}>
-        <div class="card-content white-text">
-          {#if encrypted}
-            <div class="material-icons white-text right" title="Encrypted">
-              lock
-            </div>
-          {/if}
-          {#if hovering}
-            <div class="right">
-              <div class="btn red" on:click={() => (showDeleteModal = true)}>
-                Delete
-              </div>
-              <div class="btn grey" on:click={() => (editing = true)}>Edit</div>
-            </div>
-          {/if}
-          <i class="aside">
-            {createdTimeStr}
-            {#if updatedAt}edited {updatedTimeStr}{/if}
-          </i>
-          <div class="markdown-content">
-            {@html marked(displayContent, { gfm: true })}
-          </div>
-        </div>
+{#if editing}
+  <PostEntry
+    bind:newPostContent={editedContent}
+    bind:encrypted
+    {id}
+    postInProgress={updateInProgress}
+    on:updatePost={updatePost}
+    update="true"
+    on:cancelEdit={() => {
+      editing = false;
+    }} />
+{:else}
+  <div
+    class="card padded"
+    on:mouseenter={() => (hovering = true)}
+    on:mouseleave={() => (hovering = false)}>
+    {#if encrypted}
+      <div class="material-icons right" title="Encrypted">lock</div>
+    {/if}
+    {#if hovering}
+      <div class="right">
+        <button class="danger" on:click={() => (showDeleteModal = true)}>
+          Delete
+        </button>
+        <button on:click={() => (editing = true)}>Edit</button>
       </div>
     {/if}
+    <i class="aside">
+      {createdTimeStr}
+      {#if updatedAt}edited {updatedTimeStr}{/if}
+    </i>
+    <div class="markdown-content">
+      {@html marked(displayContent, { gfm: true })}
+    </div>
   </div>
-</div>
+{/if}
 
 {#if showDeleteModal}
   <Modal on:close={() => (showDeleteModal = false)}>
-    <div class="card grey darken-4">
-      <div class="card-content white-text">
-        <div>Are you sure you want to delete this post?</div>
-      </div>
-      <div class="card-action">
-        <button
-          class="btn grey darken-2"
-          on:click={() => (showDeleteModal = false)}>
-          Cancel
-        </button>
-        <button
-          class="btn red darken-2 right"
-          on:click={dispatch('deletePost', id)}>
-          Delete
-        </button>
-      </div>
+    <div class="card padded">
+      <div>Are you sure you want to delete this post?</div>
+      <button on:click={() => (showDeleteModal = false)}>Cancel</button>
+      <button class="danger right" on:click={dispatch('deletePost', id)}>
+        Delete
+      </button>
     </div>
   </Modal>
 {/if}

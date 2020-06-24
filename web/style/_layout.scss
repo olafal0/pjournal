@@ -1,0 +1,34 @@
+@use 'variables';
+
+.container {
+  margin: 0px auto;
+
+  max-width: variables.$large-width;
+  width: 70%;
+
+  @media (max-width: variables.$large-width) {
+    width: 70%;
+  }
+  @media (max-width: variables.$med-width) {
+    width: 85%;
+  }
+  @media (max-width: variables.$small-width) {
+    width: 90%;
+  }
+}
+
+.padded {
+  padding: 10px;
+}
+
+.right {
+  float: right;
+}
+
+.left {
+  float: left;
+}
+
+.hide {
+  display: none !important;
+}

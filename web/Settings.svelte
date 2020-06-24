@@ -24,51 +24,39 @@
 </script>
 
 <div class="container">
-  <div class="col">
-    <div class="row">
-      <div class="card grey darken-4 white-text">
-        <div class="card-content white-text">
-          <button
-            class="btn-flat material-icons white-text left"
-            style="padding-left:0px;"
-            on:click={closeSettings}>
-            arrow_back
-          </button>
-          <h1 class="small">Settings</h1>
-          <p>
-            Local encryption enables you to save and edit journal entries
-            without the actual content of your posts ever leaving your machine
-            in unencrypted form. All posts are encrypted with a key derived from
-            your local encryption password before they are sent to the server.
-            The key itself is never sent to the server, and only the encrypted
-            content of your posts are stored on the server.
-          </p>
-          <br />
-          <p>Please use a different password than your account password.</p>
-          <br />
-          <label class="white-text">
-            <input type="checkbox" bind:checked={settings.encryption} />
-            <span>Enable local encryption</span>
-          </label>
-          <form id="settings-form" on:submit|preventDefault={savePrefs}>
-            <label class="white-text">
-              <input name="dummy-password" type="password" class="hide" />
-              <input
-                class="white-text"
-                type="password"
-                id="encryption-pass"
-                name="encryption-pass"
-                bind:value={settings.encryptPass}
-                disabled={!settings.encryption} />
-              <span>Local encryption password</span>
-            </label>
-            <input type="submit" class="hide" />
-          </form>
-        </div>
-        <div class="card-action">
-          <button class="btn grey darken-2" on:click={savePrefs}>Save</button>
-        </div>
-      </div>
-    </div>
+  <div class="card padded">
+    <button
+      class="borderless material-icons left"
+      style="padding-left:0px;"
+      on:click={closeSettings}>
+      arrow_back
+    </button>
+    <h2>Settings</h2>
+    <p>
+      Local encryption enables you to save and edit journal entries without the
+      actual content of your posts ever leaving your machine in unencrypted
+      form. All posts are encrypted with a key derived from your local
+      encryption password before they are sent to the server. The key itself is
+      never sent to the server, and only the encrypted content of your posts are
+      stored on the server.
+    </p>
+    <p>Please use a different password than your account password.</p>
+    <br />
+    <form class="nopad" on:submit|preventDefault={savePrefs}>
+      <label class="right">
+        Enable local encryption
+        <input type="checkbox" bind:checked={settings.encryption} />
+      </label>
+      <input name="dummy-password" type="password" class="hide" />
+      <label>
+        Local encryption password
+        <input
+          type="password"
+          name="encryption-pass"
+          bind:value={settings.encryptPass}
+          disabled={!settings.encryption} />
+      </label>
+      <input type="submit" value="Save" />
+    </form>
   </div>
 </div>

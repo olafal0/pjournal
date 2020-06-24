@@ -45,7 +45,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 1;
     backdrop-filter: blur(5px);
   }
@@ -59,7 +59,7 @@
     max-height: calc(100vh - 4em);
     overflow: auto;
     transform: translate(-50%, -50%);
-    padding: 1em;
+    padding: 10px;
     border-radius: 0.2em;
     z-index: 0;
   }
@@ -68,7 +68,6 @@
 <svelte:window on:keydown={handle_keydown} />
 
 <div class="modal-bg" on:click={() => dispatch('close')}>
-
   <div
     class="modal-fg"
     role="dialog"
