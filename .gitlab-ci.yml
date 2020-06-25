@@ -60,6 +60,7 @@ pages:
     - cd web
     - npm ci
     - ./node_modules/parcel/bin/cli.js build index.html --no-source-maps --experimental-scope-hoisting --public-url ./
+    - gzip -k -9 $(find dist -type f)
     - cp -r dist ../public
   artifacts:
     paths:
