@@ -1,0 +1,13 @@
+{
+  "name": "pjournal",
+  "short_name": "pjournal",
+  "description": "Web application for private & secure encrypted personal journaling.",
+  "icons": [
+    {
+      "src": "icons/logo.svg",
+      "sizes": "48x48 72x72 96x96 128x128 256x256 512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone"
+}
