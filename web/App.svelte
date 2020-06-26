@@ -4,7 +4,7 @@
   import Login from "./Login";
   import Auth from "./Auth";
   import request from "./request";
-  import { username } from "./store";
+  import { username, localEncryptEnabled, encryptKey } from "./store";
   import { onMount } from "svelte";
 
   let user = null;
@@ -20,6 +20,8 @@
 
   function logout() {
     Auth.signOut().then(() => {
+      $localEncryptEnabled = false;
+      $encryptKey = null;
       user = null;
     });
   }
