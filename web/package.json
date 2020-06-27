@@ -2,20 +2,17 @@
   "name": "pjournal-web",
   "version": "0.1.0",
   "description": "",
-  "main": "index.ts",
+  "main": "index.js",
   "dependencies": {
     "@aws-amplify/auth": "^3.2.12",
-    "@types/materialize-css": "^1.0.7",
     "marked": "^0.8.2",
-    "material-design-icons": "^3.0.1",
-    "materialize-css": "^1.0.0",
     "parcel": "^1.12.4",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-svelte": "^4.0.6",
-    "prismjs": "^1.20.0",
+    "parcel-plugin-workbox3": "https://github.com/olafal0/parcel-plugin-workbox3.git",
+    "sass": "^1.26.9",
     "svelte": "^3.20.1",
-    "typescript": "^3.8.3",
-    "sass": "^1.26.9"
+    "typescript": "^3.8.3"
   },
   "scripts": {
     "start": "parcel watch index.html",
