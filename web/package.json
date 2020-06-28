@@ -9,7 +9,7 @@
     "parcel": "^1.12.4",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-svelte": "^4.0.6",
-    "parcel-plugin-workbox3": "https://github.com/olafal0/parcel-plugin-workbox3.git",
+    "@olafalo/parcel-plugin-workbox": "^1.4.2",
     "sass": "^1.26.9",
     "svelte": "^3.20.1",
     "typescript": "^3.8.3"
