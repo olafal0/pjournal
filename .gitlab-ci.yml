@@ -24,6 +24,8 @@ deploy development:
       - "server/**/*"
       - deployment-prereq.yml
       - pjournal.yml
+    refs:
+      - master
   before_script:
     - apt-get update
     - apt-get install -y zip jq python-pip
