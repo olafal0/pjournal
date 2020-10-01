@@ -30,7 +30,7 @@ form {
     display: block;
     margin: 10px 0px;
     padding: 10px;
-    width: 100%;
+    width: calc(100% - 20px);
     color: variables.$text-light;
     background-color: transparent;
     border: 1px solid variables.$attn-neutral;
