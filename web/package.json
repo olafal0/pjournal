@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@aws-amplify/auth": "^3.2.12",
-    "marked": "^0.8.2",
+    "marked": "^4.0.10",
     "parcel": "^1.12.4",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-svelte": "^4.0.6",
